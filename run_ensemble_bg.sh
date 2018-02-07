@@ -1,0 +1,1 @@
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32,nvcc.flags=-D_FORCE_INLINES,lib.cnmem=1 stdbuf -oL nohup python main_compute_segmentations_ensemble.py $1 > experiments/ensemble/log.log 2>&1&
