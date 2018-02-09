@@ -595,7 +595,7 @@ class ResNet(ConvNet):
         # twice normal channels when projecting!
         n_filters = l_inp.output_shape[1]*2 
         l = Conv2DLayer(l_inp, num_filters=n_filters, filter_size=(1, 1),
-                 stride=(2, 2), nonlinearity=None, pad='same', b=None)
+                 stride=(2, 2), nonlinearity=None, pad='"same"', b=None)
         l = BatchNormLayer(l)
         return l
 
@@ -617,12 +617,12 @@ class ResNet(ConvNet):
         n_filters, first_stride = self.filters_increase_dims(l_inp, increase_dim)
         # conv -> BN -> nonlin -> conv -> BN -> sum -> nonlin
         l = Conv2DLayer(l_inp, num_filters=n_filters, filter_size=(3, 3),
-                 stride=first_stride, nonlinearity=None, pad='same',
+                 stride=first_stride, nonlinearity=None, pad='"same"',
                  W=lasagne.init.HeNormal(gain='relu'))
         l = BatchNormLayer(l)
         l = NonlinearityLayer(l, nonlinearity=nonlinearity)
         l = Conv2DLayer(l, num_filters=n_filters, filter_size=(3, 3),
-                 stride=(1, 1), nonlinearity=None, pad='same',
+                 stride=(1, 1), nonlinearity=None, pad='"same"',
                  W=lasagne.init.HeNormal(gain='relu'))
         l = BatchNormLayer(l)
         if increase_dim:
@@ -645,17 +645,17 @@ class ResNet(ConvNet):
         scale = 4 # as per bottleneck architecture used in paper
         scaled_filters = n_filters/scale
         l = Conv2DLayer(l_inp, num_filters=scaled_filters, filter_size=(1, 1),
-                 stride=(1, 1), nonlinearity=None, pad='same',
+                 stride=(1, 1), nonlinearity=None, pad='"same"',
                  W=lasagne.init.HeNormal(gain='relu'))
         l = BatchNormLayer(l)
         l = NonlinearityLayer(l, nonlinearity=nonlinearity)
         l = Conv2DLayer(l, num_filters=scaled_filters, filter_size=(3, 3),
-                 stride=(1, 1), nonlinearity=None, pad='same',
+                 stride=(1, 1), nonlinearity=None, pad='"same"',
                  W=lasagne.init.HeNormal(gain='relu'))
         l = BatchNormLayer(l)
         l = NonlinearityLayer(l, nonlinearity=nonlinearity)
         l = Conv2DLayer(l, num_filters=n_filters, filter_size=(1, 1),
-                 stride=last_stride, nonlinearity=None, pad='same',
+                 stride=last_stride, nonlinearity=None, pad='"same"',
                  W=lasagne.init.HeNormal(gain='relu'))
         if increase_dim:
             # Use projection (A, B) as described in paper
@@ -688,7 +688,7 @@ class ResNet(ConvNet):
                 networks["patch_2d_"+str(i)] = ReshapeLayer(networks["patch_2d_"+str(i)], shape=([0], 1, self.patch_width, self.patch_width))
                 print("patch_2d_"+str(i)+" output_shape after reshaping: "+str(networks["patch_2d_"+str(i)].output_shape))
 
-                networks["patch_2d_"+str(i)] = Conv2DLayer(networks["patch_2d_"+str(i)], num_filters=num_filters, stride=(1, 1), filter_size=(3, 3), nonlinearity=None, pad='same')
+                networks["patch_2d_"+str(i)] = Conv2DLayer(networks["patch_2d_"+str(i)], num_filters=num_filters, stride=(1, 1), filter_size=(3, 3), nonlinearity=None, pad='"same"')
                 networks["patch_2d_"+str(i)] = BatchNormLayer(networks["patch_2d_"+str(i)])
                 networks["patch_2d_"+str(i)] = NonlinearityLayer(networks["patch_2d_"+str(i)], nonlinearity=relu)
                 networks["patch_2d_"+str(i)] = MaxPool2DLayer(networks["patch_2d_"+str(i)], pool_size=(2,2))
@@ -1267,9 +1267,9 @@ class SmallInception(ConvNet):
         net = batch_norm(net)
         self.net = batch_norm(DenseLayer(net, num_units=self.n_out, nonlinearity=softmax, W=lasagne.init.HeNormal(gain='relu')))
 
-class Inceptionv4(Convnet):
+class Inceptionv4(ConvNet):
 
-    def conv_block(self, input_layer, num_filters, filter_size, stride, nonlinearity, W=lasagne.init.HeNormal(gain='relu'), pad):
+    def conv_block(self, input_layer, num_filters, filter_size, stride, nonlinearity,  W=lasagne.init.HeNormal(gain='relu'), pad="valid"):
         x = Conv2Dlayer(input_layer, num_filters=num_filters, filter_size=filter_size, stride=stride, nonlinearity=nonlinearity, W=lasagne.init.HeNormal(gain='relu'))
         x = BatchNormLayer(x)
         x = relu(x)
@@ -1286,7 +1286,7 @@ class Inceptionv4(Convnet):
         #input to 3 conv layers
         networks["patch_2d_"+str(patch_iter)] = self.conv_block(input_layer=networks["patch_2d_"+str(patch_iter)], num_filters=32, filter_size=(3,3), stride=2, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         networks["patch_2d_"+str(patch_iter)] = self.conv_block(input_layer=networks["patch_2d_"+str(patch_iter)], num_filters=32, filter_size=(3,3), stride=1, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks["conv_2d_"+str(patch_iter)] = self.conv_block(input_layer=networks["patch_2d_"+str(patch_iter)], num_filters=64, filter_size=(3,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks["conv_2d_"+str(patch_iter)] = self.conv_block(input_layer=networks["patch_2d_"+str(patch_iter)], num_filters=64, filter_size=(3,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
        
         #input to maxpool+conv
         networks["patch_2d(1)_"+str(patch_iter)] = MaxPool2DLayer(networks["conv_2d_"+str(patch_iter)], pool_size=(3,3), stride=2)
@@ -1296,13 +1296,13 @@ class Inceptionv4(Convnet):
         networks['output'+str(patch_iter)] = ConcatLayer[["patch_2d(2)"+str(patch_iter)],"patch_2d(1)_"+str(patch_iter)]
        
         #ConvA
-        networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["output"+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["outputA"+str(patch_iter)], num_filters=64, filter_size=(7,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["outputA"+str(patch_iter)], num_filters=64, filter_size=(1,7), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["output"+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["outputA"+str(patch_iter)], num_filters=64, filter_size=(7,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["outputA"+str(patch_iter)], num_filters=64, filter_size=(1,7), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         networks['outputA'+str(patch_iter)] = self.conv_block(input_layer=networks["outputA"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1,nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
        
         #ConvB
-        networks['outputB'+str(patch_iter)] = self.conv_block(input_layer=networks["output"+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['outputB'+str(patch_iter)] = self.conv_block(input_layer=networks["output"+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         networks['outputB'+str(patch_iter)] = self.conv_block(input_layer=networks["outputB"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #concatenateAB
@@ -1322,20 +1322,20 @@ class Inceptionv4(Convnet):
         
         #inceptionMoDA
         #branch1
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks['stem_output'+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks['stem_output'+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch2
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["stem_output"+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["stem_output"+str(patch_iter)], num_filters=64, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=96, filter_size=(3,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch3
-        networks['branch_3'+str(patch_iter)] = self.conv_block(input_layer=networks["stem_output"+str(patch_iter)], num_filters=96, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_3'+str(patch_iter)] = self.conv_block(input_layer=networks["stem_output"+str(patch_iter)], num_filters=96, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch4
-        networks['branch_4'+str(patch_iter)] = Pool2DLayer(networks["stem_output"+str(patch_iter)], pool_size=(3,3), stride=1, pad=same, mode='average_inc_pad')
-        networks['branch_4'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_4"+str(patch_iter)], num_filters=96, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_4'+str(patch_iter)] = Pool2DLayer(networks["stem_output"+str(patch_iter)], pool_size=(3,3), stride=1, pad="same", mode='average_inc_pad')
+        networks['branch_4'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_4"+str(patch_iter)], num_filters=96, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #concatenate
         networks['output'+str(patch_iter)] = ConcatLayer(networks["branch_1"+str(patch_iter)], networks["branch_2"+str(patch_iter)], networks["branch_3"+str(patch_iter)], networks["branch_4"+str(patch_iter)])
@@ -1347,12 +1347,12 @@ class Inceptionv4(Convnet):
         
          #reductionA 35x35->17x17
          #branch1
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputModA, num_filters=192, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu')) 
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=224, filter_size=(3,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(3,3), stride=2, pad=valid, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputModA, num_filters=192, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu')) 
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=224, filter_size=(3,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(3,3), stride=2, pad="valid", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch2
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputModA, num_filters=384, filter_size=(3,3), stride=2, pad=valid, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputModA, num_filters=384, filter_size=(3,3), stride=2, pad="valid", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch3
         networks['branch_3'+str(patch_iter)] = MaxPool2DLayer(outputModA, pool_size=(3,3), stride=2)
@@ -1367,23 +1367,23 @@ class Inceptionv4(Convnet):
 
         #inceptionMoDB
         #branch1
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputRedA, num_filters=192, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=192, filter_size=(1,7), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=224, filter_size=(7,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=224, filter_size=(1,7), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(7,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputRedA, num_filters=192, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=192, filter_size=(1,7), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=224, filter_size=(7,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=224, filter_size=(1,7), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(7,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch2
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputRedA, num_filters=192, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=224, filter_size=(1,7), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=256, filter_size=(1,7), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputRedA, num_filters=192, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=224, filter_size=(1,7), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=256, filter_size=(1,7), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch3
-        networks['branch_3'+str(patch_iter)] = self.conv_block(input_layer=outputRedA, num_filters=384, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_3'+str(patch_iter)] = self.conv_block(input_layer=outputRedA, num_filters=384, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch4
-        networks['branch_4'+str(patch_iter)] = Pool2DLayer(outputRedA, pool_size=(3,3), stride=1, pad=same, mode='average_inc_pad')
-        networks['branch_4'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_4"+str(patch_iter)], num_filters=128, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_4'+str(patch_iter)] = Pool2DLayer(outputRedA, pool_size=(3,3), stride=1, pad="same", mode='average_inc_pad')
+        networks['branch_4'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_4"+str(patch_iter)], num_filters=128, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #concatenate
         networks['output'+str(patch_iter)] = ConcatLayer(networks["branch_1"+str(patch_iter)], networks["branch_2"+str(patch_iter)], networks["branch_3"+str(patch_iter)], networks["branch_4"+str(patch_iter)])
@@ -1394,14 +1394,14 @@ class Inceptionv4(Convnet):
         networks = {}
         
         #reductionB 17x17->8x8
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=256, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu')) 
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(1,7), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=320, filter_size=(7,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=320, filter_size=(3,3), stride=2, pad=valid, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=256, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu')) 
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(1,7), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=320, filter_size=(7,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=320, filter_size=(3,3), stride=2, pad="valid", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch2
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=192, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=192, filter_size=(3,3), stride=2, pad=valid, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=192, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=192, filter_size=(3,3), stride=2, pad="valid", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch3
         networks['branch_3'+str(patch_iter)] = MaxPool2DLayer(outputModB, pool_size=(3,3), stride=2)
@@ -1417,23 +1417,23 @@ class Inceptionv4(Convnet):
         
         #inceptionMoDC
         #branch1
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=384, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=448, filter_size=(1,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=512, filter_size=(3,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_11'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=filter_size_for_valid_padded_convs, stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_12'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(3,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=384, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=448, filter_size=(1,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_1'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=512, filter_size=(3,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_11'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=filter_size_for_valid_padded_convs, stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_12'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_1"+str(patch_iter)], num_filters=256, filter_size=(3,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch2
-        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=384, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_21'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=256, filter_size=(3,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
-        networks['branch_22'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=256, filter_size=(1,3), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_2'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=384, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_21'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=256, filter_size=(3,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_22'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_2"+str(patch_iter)], num_filters=256, filter_size=(1,3), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch3
-        networks['branch_3'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=256, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_3'+str(patch_iter)] = self.conv_block(input_layer=outputModB, num_filters=256, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #branch4
-        networks['branch_4'+str(patch_iter)] = Pool2DLayer(outputModB, pool_size=(3,3), stride=1, pad=same, mode='average_inc_pad')
-        networks['branch_4'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_4"+str(patch_iter)], num_filters=256, filter_size=(1,1), stride=1, pad=same, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
+        networks['branch_4'+str(patch_iter)] = Pool2DLayer(outputModB, pool_size=(3,3), stride=1, pad="same", mode='average_inc_pad')
+        networks['branch_4'+str(patch_iter)] = self.conv_block(input_layer=networks["branch_4"+str(patch_iter)], num_filters=256, filter_size=(1,1), stride=1, pad="same", nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         
         #concatenate
         networks['output'+str(patch_iter)] = ConcatLayer(networks["branch_11"+str(i)], networks["branch_12"+str(patch_iter)], networks["branch_21"+str(patch_iter)], networks["branch_22"+str(patch_iter)], networks["branch_3"+str(patch_iter)], networks["branch_4"+str(patch_iter)])
@@ -1444,7 +1444,7 @@ class Inceptionv4(Convnet):
    
     #averagepool
         networks = {}
-        networks["output"+str(patch_iter)] = Pool2DLayer(outputModC, pool_size=(8,8), pad=valid, mode='average_inc_pad')
+        networks["output"+str(patch_iter)] = Pool2DLayer(outputModC, pool_size=(8,8), pad="valid", mode='average_inc_pad')
         networks['output'+str(patch_iter)] = DropoutLayer(networks["output"+str(i)], p=0.8)
         print("output"+str(patch_iter)+" output_shape before flattening: "+str(networks["output"+str(i)].output_shape))
         networks["output"+str(patch_iter)] = FlattenLayer(networks["output"+str(i)])
@@ -1511,7 +1511,7 @@ class Inceptionv4(Convnet):
 
         net = DropoutLayer(merged_net)
 
-        net = DenseLayer(net, num_units=3000, nonlinearity=relu, W=lasagne.init.He Normal(gain='relu'))
+        net = DenseLayer(net, num_units=3000, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         net = batch_norm(net)
         net = DenseLayer(net, num_units=3000, nonlinearity=relu, W=lasagne.init.HeNormal(gain='relu'))
         net = batch_norm(net)
