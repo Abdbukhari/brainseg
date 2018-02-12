@@ -58,7 +58,6 @@ docs/_build/
 *.mex*
 
 *.h5
-*.nii
 *.gz
 *.iml
 *.xml
@@ -72,7 +71,6 @@ docs/_build/
 *.png
 meg/
 experiments/
-datasets/
 
 # Virtual environment
 venv/
