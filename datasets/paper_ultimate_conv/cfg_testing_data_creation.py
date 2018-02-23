@@ -23,7 +23,7 @@ pick_features = [
         "how": "2Dortho",  # 2Dortho, 2DorthoRotated, 3D, three_patches, local_global, grid_patches
         "patch_width": 29,
         "axis": [0, 1, 2],
-        "scale": 3
+        "scale": 1
     },
     {
         "how": "2Dortho",  # 2Dortho, 2DorthoRotated, 3D, three_patches, local_global, grid_patches
@@ -35,11 +35,11 @@ pick_features = [
         "how": "3D",  # 2Dortho, 2DorthoRotated, 3D, three_patches, local_global, grid_patches
         "patch_width": 13,
         "scale": 1
-    },
-    {
-        "how": "centroid",  # 2Dortho, 2DorthoRotated, 3D, three_patches, local_global, grid_patches
-        "n_features": 134
     }
+    # {
+    #     "how": "centroid",  # 2Dortho, 2DorthoRotated, 3D, three_patches, local_global, grid_patches
+    #     "n_features": 134
+    # }
 ]
 
 pick_tg = {
