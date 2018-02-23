@@ -94,7 +94,7 @@ class ExperimentBrain(Experiment):
         # net = SmallInception(135, input_var, target_var, 29, 29, 13, 134)
         # net = Conv3DNet_NoCentroid(135, input_var, target_var, 29, 29, 13, 134)
         # net = ConvNet_VerySmall(135, input_var, target_var, 29, 29, 13, 134)
-        net = Inceptionv4Simple(135, input_var, target_var, 29, 29, 13, 134)
+        net = Inceptionv4(135, input_var, target_var, 29, 29, 13, 134)
 
         # print net.net
         learning_rate = 0.05

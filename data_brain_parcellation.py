@@ -157,9 +157,7 @@ class DataGeneratorBrain():
         ### Initialization of the containers
 
         # Compute the number of voxels to extract from each atlas
-        print(batch_size)
-        print(self.files)
-	voxels_per_atlas = distrib_balls_in_bins(batch_size, self.n_files) #n_data in general = 320000, n_files = no. of mri
+        voxels_per_atlas = distrib_balls_in_bins(batch_size, self.n_files) #n_data in general = 320000, n_files = no. of mri
 
         ### Fill in the containers
 
