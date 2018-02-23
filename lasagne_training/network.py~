@@ -1773,8 +1773,7 @@ class Inceptionv4Simple(ConvNet):
                networks['patch_3d'] = self.build_3d_patch_layer(input_layer, s)
         networks_list = []
         for key, value in networks.iteritems():
-            if 'inception_C' in key or 'patch_3d' in key:
-                networks_list.append(value)
+            networks_list.append(value)
 
         merged_net = ConcatLayer(networks_list, axis=1)
 
