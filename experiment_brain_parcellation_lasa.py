@@ -1,6 +1,7 @@
 __author__ = 'adeb'
 
 import sys
+import datetime
 from shutil import copy2
 import inspect
 import PIL
@@ -94,18 +95,22 @@ class ExperimentBrain(Experiment):
         # net = SmallInception(135, input_var, target_var, 29, 29, 13, 134)
         # net = Conv3DNet_NoCentroid(135, input_var, target_var, 29, 29, 13, 134)
         # net = ConvNet_VerySmall(135, input_var, target_var, 29, 29, 13, 134)
+        #try:
         net = Inceptionv4Simple(135, input_var, target_var, 29, 29, 13, 134)
+       # except Exception as e:
+           # print("Program terminated at: " + datetime.datetime.now())
+          #  print(e)
 
         # print net.net
-        learning_rate = 0.05
+        learning_rate = 0.045
         # learning_rate = 0.0001
 
         # Create stopping criteria and add them to the trainer
-        max_epoch = 300
+        max_epoch = 15
         # early_stopping = EarlyStopping(err_validation, 10, 0.99, 5)
 
         # Create the trainer object
-        batch_size = 200
+        batch_size = 50
         t = Trainer(net, ds_testing, ds_validation, ds_training, batch_size, learning_rate)
 
         ###### Train the network
