@@ -74,3 +74,5 @@ experiments/
 
 # Virtual environment
 venv/
+
+datasets/
